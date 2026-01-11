@@ -882,7 +882,7 @@ function generateHomePage(scuValue) {
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(180deg, #f5f5f7 0%, #ffffff 100%);
+            background: linear-gradient(180deg, #f5f5f7 0%, #ffffff 50%, #fafafa 100%);
             color: #1d1d1f;
             min-height: 100vh;
             padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -897,36 +897,43 @@ function generateHomePage(scuValue) {
         
         .header {
             text-align: center;
-            padding: 40px 20px 30px;
+            padding: 48px 20px 32px;
         }
         
         .header h1 {
-            font-size: 34px;
+            font-size: 40px;
             font-weight: 700;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.3px;
             color: #1d1d1f;
             margin-bottom: 8px;
+            line-height: 1.1;
         }
         
         .header p {
             font-size: 17px;
             color: #86868b;
             font-weight: 400;
+            line-height: 1.5;
         }
         
         .card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
-            border: 0.5px solid rgba(0, 0, 0, 0.04);
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 0.5px solid rgba(0, 0, 0, 0.06);
+            will-change: transform;
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .form-group:last-child {
+            margin-bottom: 0;
         }
         
         .form-group label {
@@ -939,42 +946,75 @@ function generateHomePage(scuValue) {
             letter-spacing: 0.5px;
         }
         
-        .form-group input {
+        .form-group input,
+        .form-group textarea {
             width: 100%;
             padding: 14px 16px;
             font-size: 17px;
             font-weight: 400;
             color: #1d1d1f;
             background: rgba(142, 142, 147, 0.12);
-            border: none;
+            border: 2px solid transparent;
             border-radius: 12px;
             outline: none;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             -webkit-appearance: none;
         }
         
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group textarea:focus {
             background: rgba(142, 142, 147, 0.16);
-            transform: scale(1.01);
+            border-color: #007AFF;
+            transform: scale(1.005);
         }
         
-        .form-group input::placeholder {
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
             color: #86868b;
         }
         
-        .switch-group {
+        .form-group small {
+            display: block;
+            margin-top: 8px;
+            color: #86868b;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .list-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 0;
+            padding: 16px 0;
+            min-height: 52px;
+            cursor: pointer;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+            transition: background-color 0.15s ease;
         }
         
-        .switch-group label {
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-item:active {
+            background-color: rgba(142, 142, 147, 0.08);
+            margin: 0 -28px;
+            padding-left: 28px;
+            padding-right: 28px;
+        }
+        
+        .list-item-label {
             font-size: 17px;
             font-weight: 400;
             color: #1d1d1f;
-            text-transform: none;
-            letter-spacing: 0;
+            flex: 1;
+        }
+        
+        .list-item-description {
+            font-size: 13px;
+            color: #86868b;
+            margin-top: 4px;
+            line-height: 1.4;
         }
         
         .switch {
@@ -983,12 +1023,13 @@ function generateHomePage(scuValue) {
             height: 31px;
             background: rgba(142, 142, 147, 0.3);
             border-radius: 16px;
-            transition: background 0.3s ease;
+            transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            flex-shrink: 0;
         }
         
         .switch.active {
-            background: #34c759;
+            background: #34C759;
         }
         
         .switch::after {
@@ -1001,7 +1042,7 @@ function generateHomePage(scuValue) {
             background: #ffffff;
             border-radius: 50%;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
         }
         
         .switch.active::after {
@@ -1014,25 +1055,41 @@ function generateHomePage(scuValue) {
             font-size: 17px;
             font-weight: 600;
             color: #ffffff;
-            background: #007aff;
+            background: #007AFF;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             margin-top: 8px;
             -webkit-appearance: none;
-            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+            will-change: transform;
+        }
+        
+        .btn:hover {
+            background: #0051D5;
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3);
         }
         
         .btn:active {
-            transform: scale(0.98);
-            opacity: 0.8;
+            transform: scale(0.97);
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .btn-secondary {
             background: rgba(142, 142, 147, 0.12);
-            color: #007aff;
+            color: #007AFF;
             box-shadow: none;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(142, 142, 147, 0.16);
         }
         
         .btn-secondary:active {
@@ -1048,20 +1105,33 @@ function generateHomePage(scuValue) {
             color: #1d1d1f;
             word-break: break-all;
             display: none;
+            line-height: 1.5;
         }
         
         .result.show {
             display: block;
         }
         
+        .result-card {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 0.5px solid rgba(0, 0, 0, 0.06);
+        }
+        
         .result-url {
             margin-top: 12px;
             padding: 12px;
             background: rgba(0, 122, 255, 0.1);
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 13px;
             color: #007aff;
             word-break: break-all;
+            line-height: 1.5;
         }
         
         .copy-btn {
@@ -1071,20 +1141,26 @@ function generateHomePage(scuValue) {
             background: rgba(0, 122, 255, 0.1);
             color: #007aff;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        
-        .client-btn {
-            padding: 12px 10px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #007aff;
-            background: rgba(0, 122, 255, 0.1);
-            border: 1px solid rgba(0, 122, 255, 0.2);
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s ease;
+        }
+        
+        .copy-btn:active {
+            background: rgba(0, 122, 255, 0.2);
+            transform: scale(0.98);
+        }
+        
+        .client-btn {
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #007AFF;
+            background: rgba(0, 122, 255, 0.1);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             -webkit-appearance: none;
             white-space: nowrap;
             overflow: hidden;
@@ -1093,8 +1169,9 @@ function generateHomePage(scuValue) {
         }
         
         .client-btn:active {
-            transform: scale(0.98);
+            transform: scale(0.97);
             background: rgba(0, 122, 255, 0.2);
+            border-color: rgba(0, 122, 255, 0.3);
         }
         
         .checkbox-label {
@@ -1107,12 +1184,13 @@ function generateHomePage(scuValue) {
             -webkit-user-select: none;
             position: relative;
             z-index: 1;
+            padding: 8px 0;
         }
         
         .checkbox-label input[type="checkbox"] {
-            margin-right: 8px;
-            width: 20px;
-            height: 20px;
+            margin-right: 12px;
+            width: 22px;
+            height: 22px;
             cursor: pointer;
             flex-shrink: 0;
             position: relative;
@@ -1130,18 +1208,25 @@ function generateHomePage(scuValue) {
         @media (max-width: 480px) {
             .client-btn {
                 font-size: 12px;
-                padding: 10px 8px;
+                padding: 10px 12px;
+            }
+            
+            .header h1 {
+                font-size: 34px;
             }
         }
         
         .footer {
             text-align: center;
-            padding: 30px 20px;
+            padding: 32px 20px;
             color: #86868b;
             font-size: 13px;
         }
         
         .footer a {
+            color: #007AFF;
+            text-decoration: none;
+            font-weight: 500;
             transition: opacity 0.2s ease;
         }
         
@@ -1151,26 +1236,50 @@ function generateHomePage(scuValue) {
         
         @media (prefers-color-scheme: dark) {
             body {
-                background: linear-gradient(180deg, #000000 0%, #1c1c1e 100%);
+                background: linear-gradient(180deg, #000000 0%, #1c1c1e 50%, #2c2c2e 100%);
                 color: #f5f5f7;
             }
             
             .card {
-                background: rgba(28, 28, 30, 0.8);
-                border: 0.5px solid rgba(255, 255, 255, 0.1);
+                background: rgba(28, 28, 30, 0.75);
+                border: 0.5px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
             }
             
-            .form-group input {
+            .form-group input,
+            .form-group textarea {
                 background: rgba(142, 142, 147, 0.2);
                 color: #f5f5f7;
             }
             
-            .form-group input:focus {
+            .form-group input:focus,
+            .form-group textarea:focus {
                 background: rgba(142, 142, 147, 0.25);
+                border-color: #5ac8fa;
             }
             
-            .switch-group label {
+            .list-item {
+                border-bottom-color: rgba(255, 255, 255, 0.1);
+            }
+            
+            .list-item:active {
+                background-color: rgba(255, 255, 255, 0.08);
+            }
+            
+            .list-item-label {
                 color: #f5f5f7;
+            }
+            
+            .switch {
+                background: rgba(142, 142, 147, 0.4);
+            }
+            
+            .switch.active {
+                background: #30d158;
+            }
+            
+            .switch::after {
+                background: #ffffff;
             }
             
             .result {
@@ -1178,12 +1287,12 @@ function generateHomePage(scuValue) {
                 color: #f5f5f7;
             }
             
-            select {
-                background: rgba(142, 142, 147, 0.2) !important;
-                color: #f5f5f7 !important;
+            .result-card {
+                background: rgba(28, 28, 30, 0.9);
+                border-color: rgba(255, 255, 255, 0.1);
             }
             
-            label span {
+            .checkbox-label span {
                 color: #f5f5f7;
             }
             
@@ -1195,15 +1304,6 @@ function generateHomePage(scuValue) {
             
             .footer a {
                 color: #5ac8fa !important;
-            }
-            
-            textarea {
-                background: rgba(142, 142, 147, 0.2) !important;
-                color: #f5f5f7 !important;
-            }
-            
-            textarea::placeholder {
-                color: #86868b !important;
             }
             
             #testResult, #batchTestResult {
@@ -1240,19 +1340,25 @@ function generateHomePage(scuValue) {
                 <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义WebSocket路径，例如：/v2ray 或 /</small>
             </div>
             
-            <div class="switch-group">
-                <label>启用优选域名</label>
-                <div class="switch active" id="switchDomain" onclick="toggleSwitch('switchDomain')"></div>
+            <div class="list-item" onclick="toggleSwitch('switchDomain')">
+                <div>
+                    <div class="list-item-label">启用优选域名</div>
+                </div>
+                <div class="switch active" id="switchDomain"></div>
             </div>
             
-            <div class="switch-group">
-                <label>启用优选IP</label>
-                <div class="switch active" id="switchIP" onclick="toggleSwitch('switchIP')"></div>
+            <div class="list-item" onclick="toggleSwitch('switchIP')">
+                <div>
+                    <div class="list-item-label">启用优选IP</div>
+                </div>
+                <div class="switch active" id="switchIP"></div>
             </div>
             
-            <div class="switch-group">
-                <label>启用GitHub优选</label>
-                <div class="switch active" id="switchGitHub" onclick="toggleSwitch('switchGitHub')"></div>
+            <div class="list-item" onclick="toggleSwitch('switchGitHub')">
+                <div>
+                    <div class="list-item-label">启用GitHub优选</div>
+                </div>
+                <div class="switch active" id="switchGitHub"></div>
             </div>
             
             <div class="form-group" id="githubUrlGroup" style="margin-top: 12px;">
@@ -1263,18 +1369,24 @@ function generateHomePage(scuValue) {
             
             <div class="form-group" style="margin-top: 24px;">
                 <label>协议选择</label>
-                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
-                    <div class="switch-group">
-                        <label>VLESS (vl)</label>
-                        <div class="switch active" id="switchVL" onclick="toggleSwitch('switchVL')"></div>
+                <div style="margin-top: 8px;">
+                    <div class="list-item" onclick="toggleSwitch('switchVL')">
+                        <div>
+                            <div class="list-item-label">VLESS (vl)</div>
+                        </div>
+                        <div class="switch active" id="switchVL"></div>
                     </div>
-                    <div class="switch-group">
-                        <label>Trojan (tj)</label>
-                        <div class="switch" id="switchTJ" onclick="toggleSwitch('switchTJ')"></div>
+                    <div class="list-item" onclick="toggleSwitch('switchTJ')">
+                        <div>
+                            <div class="list-item-label">Trojan (tj)</div>
+                        </div>
+                        <div class="switch" id="switchTJ"></div>
                     </div>
-                    <div class="switch-group">
-                        <label>VMess (vm)</label>
-                        <div class="switch" id="switchVM" onclick="toggleSwitch('switchVM')"></div>
+                    <div class="list-item" onclick="toggleSwitch('switchVM')">
+                        <div>
+                            <div class="list-item-label">VMess (vm)</div>
+                        </div>
+                        <div class="switch" id="switchVM"></div>
                     </div>
                 </div>
             </div>
@@ -1328,11 +1440,13 @@ function generateHomePage(scuValue) {
                 </div>
             </div>
             
-            <div class="switch-group" style="margin-top: 20px;">
-                <label>仅TLS节点</label>
-                <div class="switch" id="switchTLS" onclick="toggleSwitch('switchTLS')"></div>
+            <div class="list-item" onclick="toggleSwitch('switchTLS')" style="margin-top: 8px;">
+                <div>
+                    <div class="list-item-label">仅TLS节点</div>
+                    <div class="list-item-description">启用后只生成带TLS的节点，不生成非TLS节点（如80端口）</div>
+                </div>
+                <div class="switch" id="switchTLS"></div>
             </div>
-            <small style="display: block; margin-top: -12px; margin-bottom: 12px; color: #86868b; font-size: 13px; padding-left: 0;">启用后只生成带TLS的节点，不生成非TLS节点（如80端口）</small>
         </div>
         
         <div class="card" style="margin-top: 16px;">
@@ -1344,7 +1458,7 @@ function generateHomePage(scuValue) {
                     <input type="number" id="testTimeout" placeholder="超时(ms)" value="5000" style="flex: 1; min-width: 0;">
                 </div>
                 <button type="button" class="btn btn-secondary" onclick="testSingleLatency()" id="testBtn" style="margin-top: 0;">测试延迟</button>
-                <div id="testResult" style="display: none; margin-top: 12px; padding: 12px; background: rgba(142, 142, 147, 0.12); border-radius: 8px; font-size: 14px;"></div>
+                <div id="testResult" class="result-card" style="display: none; margin-top: 12px;"></div>
             </div>
             
             <div class="form-group" style="margin-top: 24px;">
@@ -1600,28 +1714,25 @@ function generateHomePage(scuValue) {
                 
                 if (result.success) {
                     testResult.innerHTML = \`
-                        <div style="color: #34c759; font-weight: 600; margin-bottom: 8px;">✓ 测试成功</div>
-                        <div style="color: #1d1d1f; margin-bottom: 4px;"><strong>延迟:</strong> \${result.latency}ms</div>
-                        \${result.ip ? \`<div style="color: #1d1d1f; margin-bottom: 4px;"><strong>IP:</strong> \${result.ip}</div>\` : ''}
-                        \${result.location ? \`<div style="color: #1d1d1f; margin-bottom: 4px;"><strong>位置:</strong> \${result.location}</div>\` : ''}
-                        \${result.colo ? \`<div style="color: #1d1d1f;"><strong>数据中心:</strong> \${result.colo}</div>\` : ''}
+                        <div style="color: #34C759; font-weight: 600; margin-bottom: 12px; font-size: 17px;">✓ 测试成功</div>
+                        <div style="margin-bottom: 8px;"><strong style="color: #86868b; font-size: 13px;">延迟:</strong> <span style="color: #1d1d1f; font-size: 17px; font-weight: 600;">\${result.latency}ms</span></div>
+                        \${result.ip ? \`<div style="margin-bottom: 8px;"><strong style="color: #86868b; font-size: 13px;">IP:</strong> <span style="color: #1d1d1f; font-size: 15px;">\${result.ip}</span></div>\` : ''}
+                        \${result.location ? \`<div style="margin-bottom: 8px;"><strong style="color: #86868b; font-size: 13px;">位置:</strong> <span style="color: #1d1d1f; font-size: 15px;">\${result.location}</span></div>\` : ''}
+                        \${result.colo ? \`<div><strong style="color: #86868b; font-size: 13px;">数据中心:</strong> <span style="color: #1d1d1f; font-size: 15px;">\${result.colo}</span></div>\` : ''}
                     \`;
-                    testResult.style.background = 'rgba(52, 199, 89, 0.1)';
                 } else {
                     testResult.innerHTML = \`
-                        <div style="color: #ff3b30; font-weight: 600; margin-bottom: 8px;">✗ 测试失败</div>
-                        <div style="color: #1d1d1f; margin-bottom: 4px;"><strong>延迟:</strong> \${result.latency}ms</div>
-                        <div style="color: #1d1d1f;"><strong>错误:</strong> \${result.error || '未知错误'}</div>
+                        <div style="color: #FF3B30; font-weight: 600; margin-bottom: 12px; font-size: 17px;">✗ 测试失败</div>
+                        <div style="margin-bottom: 8px;"><strong style="color: #86868b; font-size: 13px;">延迟:</strong> <span style="color: #1d1d1f; font-size: 17px; font-weight: 600;">\${result.latency}ms</span></div>
+                        <div><strong style="color: #86868b; font-size: 13px;">错误:</strong> <span style="color: #FF3B30; font-size: 15px;">\${result.error || '未知错误'}</span></div>
                     \`;
-                    testResult.style.background = 'rgba(255, 59, 48, 0.1)';
                 }
             } catch (error) {
                 testResult.style.display = 'block';
                 testResult.innerHTML = \`
-                    <div style="color: #ff3b30; font-weight: 600;">✗ 测试失败</div>
-                    <div style="color: #1d1d1f; margin-top: 4px;">\${error.message || '网络错误'}</div>
+                    <div style="color: #FF3B30; font-weight: 600; margin-bottom: 8px; font-size: 17px;">✗ 测试失败</div>
+                    <div style="color: #1d1d1f; font-size: 15px;">\${error.message || '网络错误'}</div>
                 \`;
-                testResult.style.background = 'rgba(255, 59, 48, 0.1)';
             } finally {
                 testBtn.disabled = false;
                 testBtn.textContent = '测试延迟';
@@ -1677,29 +1788,28 @@ function generateHomePage(scuValue) {
                 if (data.success) {
                     batchTestResult.style.display = 'block';
                     let html = \`
-                        <div style="padding: 12px; background: rgba(142, 142, 147, 0.12); border-radius: 8px; margin-bottom: 12px;">
-                            <div style="font-weight: 600; margin-bottom: 4px;">测试完成</div>
-                            <div style="font-size: 13px; color: #86868b;">成功: \${data.successCount} / 总计: \${data.total}</div>
+                        <div class="result-card" style="margin-bottom: 16px;">
+                            <div style="font-weight: 600; margin-bottom: 8px; font-size: 17px; color: #1d1d1f;">测试完成</div>
+                            <div style="font-size: 15px; color: #86868b;">成功: <span style="color: #34C759; font-weight: 600;">\${data.successCount}</span> / 总计: <span style="font-weight: 600;">\${data.total}</span></div>
                         </div>
                     \`;
                     
                     data.results.forEach((result, index) => {
-                        const bgColor = result.success ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 59, 48, 0.1)';
-                        const statusColor = result.success ? '#34c759' : '#ff3b30';
+                        const statusColor = result.success ? '#34C759' : '#FF3B30';
                         const statusText = result.success ? '✓' : '✗';
                         
                         html += \`
-                            <div style="padding: 12px; background: \${bgColor}; border-radius: 8px; margin-bottom: 8px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                    <div style="font-weight: 600; color: \${statusColor};">\${statusText} \${result.host}:\${result.port}</div>
-                                    <div style="font-weight: 600; color: #1d1d1f;">\${result.latency}ms</div>
+                            <div class="result-card" style="margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div style="font-weight: 600; color: \${statusColor}; font-size: 17px;">\${statusText} \${result.host}:\${result.port}</div>
+                                    <div style="font-weight: 600; color: #1d1d1f; font-size: 17px;">\${result.latency}ms</div>
                                 </div>
                                 \${result.success ? \`
-                                    \${result.ip ? \`<div style="font-size: 13px; color: #86868b;">IP: \${result.ip}</div>\` : ''}
-                                    \${result.location ? \`<div style="font-size: 13px; color: #86868b;">位置: \${result.location}</div>\` : ''}
-                                    \${result.colo ? \`<div style="font-size: 13px; color: #86868b;">数据中心: \${result.colo}</div>\` : ''}
+                                    \${result.ip ? \`<div style="margin-bottom: 4px;"><strong style="color: #86868b; font-size: 13px;">IP:</strong> <span style="color: #1d1d1f; font-size: 15px;">\${result.ip}</span></div>\` : ''}
+                                    \${result.location ? \`<div style="margin-bottom: 4px;"><strong style="color: #86868b; font-size: 13px;">位置:</strong> <span style="color: #1d1d1f; font-size: 15px;">\${result.location}</span></div>\` : ''}
+                                    \${result.colo ? \`<div><strong style="color: #86868b; font-size: 13px;">数据中心:</strong> <span style="color: #1d1d1f; font-size: 15px;">\${result.colo}</span></div>\` : ''}
                                 \` : \`
-                                    <div style="font-size: 13px; color: #ff3b30;">错误: \${result.error || '未知错误'}</div>
+                                    <div><strong style="color: #86868b; font-size: 13px;">错误:</strong> <span style="color: #FF3B30; font-size: 15px;">\${result.error || '未知错误'}</span></div>
                                 \`}
                             </div>
                         \`;
@@ -1709,16 +1819,18 @@ function generateHomePage(scuValue) {
                 } else {
                     batchTestResult.style.display = 'block';
                     batchTestResult.innerHTML = \`
-                        <div style="padding: 12px; background: rgba(255, 59, 48, 0.1); border-radius: 8px; color: #ff3b30;">
-                            测试失败: \${data.error || '未知错误'}
+                        <div class="result-card">
+                            <div style="color: #FF3B30; font-weight: 600; font-size: 17px; margin-bottom: 8px;">测试失败</div>
+                            <div style="color: #1d1d1f; font-size: 15px;">\${data.error || '未知错误'}</div>
                         </div>
                     \`;
                 }
             } catch (error) {
                 batchTestResult.style.display = 'block';
                 batchTestResult.innerHTML = \`
-                    <div style="padding: 12px; background: rgba(255, 59, 48, 0.1); border-radius: 8px; color: #ff3b30;">
-                        网络错误: \${error.message || '未知错误'}
+                    <div class="result-card">
+                        <div style="color: #FF3B30; font-weight: 600; font-size: 17px; margin-bottom: 8px;">网络错误</div>
+                        <div style="color: #1d1d1f; font-size: 15px;">\${error.message || '未知错误'}</div>
                     </div>
                 \`;
             } finally {
