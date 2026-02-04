@@ -1793,6 +1793,7 @@ export default {
         function generateAcl4ssrClashConfig(nodeGroups) {
             const GROUP_NODE_SELECT = '🔰 节点选择';
             const GROUP_AUTO_SELECT = '♻️ 自动选择';
+            const GROUP_GEMINI = 'Gemini';
             const GROUP_MEDIA_OVERSEA = '🌍 国外媒体';
             const GROUP_MEDIA_CHINA = '🌏 国内媒体';
             const GROUP_MICROSOFT = 'Ⓜ️ 微软服务';
@@ -1812,9 +1813,12 @@ export default {
             yaml += 'proxies:\n';
 
             const allProxyNames = [];
+            const perDomainAutoGroups = [];
+            const perDomainGroupYamls = [];
             const nameCounter = new Map(); // 用于跟踪重复名称并添加后缀
 
             nodeGroups.forEach(group => {
+                const groupProxyNames = [];
                 group.nodes.forEach((link, index) => {
                     const parsed = parseVlessLink(link, `节点-${index + 1}`);
                     if (!parsed) return;
@@ -1832,6 +1836,7 @@ export default {
                     }
 
                     allProxyNames.push(name);
+                    groupProxyNames.push(name);
 
                     const { server, port, uuid, tls, path, host, sni, ech } = parsed;
                     const echDomain = ech ? String(ech).trim().split(/[ +]/)[0] : '';
@@ -1856,14 +1861,37 @@ export default {
                         yaml += `      query-server-name: ${yamlQuote(echDomain)}\n`;
                     }
                 });
+
+                // 每个域名一个自动优选组
+                if (groupProxyNames.length > 0) {
+                    const groupName = `自动优选-${group.domain}`;
+                    perDomainAutoGroups.push(groupName);
+                    let groupYaml = '';
+                    groupYaml += `  - name: ${yamlQuote(groupName)}\n`;
+                    groupYaml += '    type: url-test\n';
+                    groupYaml += '    url: http://www.gstatic.com/generate_204\n';
+                    groupYaml += '    interval: 300\n';
+                    groupYaml += '    tolerance: 50\n';
+                    groupYaml += '    proxies:\n';
+                    groupProxyNames.forEach(proxyName => {
+                        groupYaml += `      - ${yamlQuote(proxyName)}\n`;
+                    });
+                    perDomainGroupYamls.push(groupYaml);
+                }
             });
 
             yaml += '\nproxy-groups:\n';
+
+            // 每个域名一个自动优选组
+            perDomainGroupYamls.forEach(g => {
+                yaml += g;
+            });
 
             // 🔰 节点选择
             yaml += `  - name: ${yamlQuote(GROUP_NODE_SELECT)}\n`;
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
+            perDomainAutoGroups.forEach(g => yaml += `      - ${yamlQuote(g)}\n`);
             yaml += `      - ${yamlQuote(GROUP_AUTO_SELECT)}\n`;
             // 不能把“全球直连”放进“节点选择”，否则会和“全球直连”里引用“节点选择”形成循环依赖
             yaml += '      - DIRECT\n';
@@ -1877,6 +1905,16 @@ export default {
             yaml += '    tolerance: 50\n';
             yaml += '    proxies:\n';
             allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
+
+            // Gemini
+            yaml += `  - name: ${yamlQuote(GROUP_GEMINI)}\n`;
+            yaml += '    type: select\n';
+            yaml += '    proxies:\n';
+            perDomainAutoGroups.forEach(g => yaml += `      - ${yamlQuote(g)}\n`);
+            yaml += `      - ${yamlQuote(GROUP_AUTO_SELECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_NODE_SELECT)}\n`;
+            allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
+            yaml += '      - DIRECT\n';
 
             // 🌍 国外媒体
             yaml += `  - name: ${yamlQuote(GROUP_MEDIA_OVERSEA)}\n`;
@@ -1956,6 +1994,7 @@ export default {
                 ChinaMedia: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/ChinaMedia.yaml',
                 ProxyMedia: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/ProxyMedia.yaml',
                 Apple: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/Apple.yaml',
+                Gemini: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/Ruleset/Gemini.yaml',
                 Microsoft: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/Ruleset/Microsoft.yaml',
                 Telegram: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/Ruleset/Telegram.yaml',
                 ProxyGFWlist: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/ProxyGFWlist.yaml',
@@ -1976,6 +2015,7 @@ export default {
             yaml += `  - RULE-SET,BanAD,${GROUP_BLOCK}\n`;
             yaml += `  - RULE-SET,BanProgramAD,${GROUP_BLOCK}\n`;
             yaml += `  - RULE-SET,Download,${GROUP_DIRECT}\n`;
+            yaml += `  - RULE-SET,Gemini,${GROUP_GEMINI}\n`;
             yaml += `  - RULE-SET,Apple,${GROUP_APPLE}\n`;
             yaml += `  - RULE-SET,Telegram,${GROUP_TELEGRAM}\n`;
             yaml += `  - RULE-SET,Microsoft,${GROUP_MICROSOFT}\n`;
