@@ -1556,11 +1556,11 @@ function generateHomePage(scuValue) {
                     alert('请输入批量配置信息');
                     return;
                 }
-                // Use String.fromCharCode(10) for newline to avoid escaping issues in template literals
-                const lines = batchInput.split('\n');
+                // Use String.fromCharCode(10) for newline to avoid escaping issues
+                const lines = batchInput.split(String.fromCharCode(10));
                 lines.forEach(line => {
-                    // 处理可能的中英文逗号
-                    const parts = line.replace(/，/g, ',').split(',');
+                    // Use String.fromCharCode(65292) for Chinese comma to avoid encoding issues
+                    const parts = line.replace(new RegExp(String.fromCharCode(65292), 'g'), ',').split(',');
                     // 只要有前两个部分（域名,UUID）就认为是有效的
                     if (parts.length >= 2) {
                         configs.push({
@@ -1597,9 +1597,10 @@ function generateHomePage(scuValue) {
             // C. 其他客户端 -> 依然走 Subconverter (因为本地只实现了 Clash yaml 生成，其他 Surge 等格式暂未本地实现)
             
             // 构建 configs 参数 (base64 encoded "domain,uuid\ndomain,uuid")
-            const configsStr = configs.map(c => \`\${c.domain},\${c.uuid}\`).join('\\n');
+            // Use String.fromCharCode(10) for join as well
+            const configsStr = configs.map(c => `${ c.domain },${ c.uuid } `).join(String.fromCharCode(10));
             const configsBase64 = btoa(configsStr);
-            const batchParams = \`?configs=\${configsBase64}&target=\${clientType}\${commonParams}\`;
+            const batchParams = `? configs = ${ configsBase64 }& target=${ clientType }${ commonParams } `;
             
             if (clientType === 'clash') {
                 // 使用本地的高级 Clash 生成器
