@@ -41,6 +41,48 @@ function isValidUUID(str) {
     return uuidRegex.test(str);
 }
 
+function yamlQuote(value) {
+    const str = value === undefined || value === null ? '' : String(value);
+    const escaped = str
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\r/g, '\\r')
+        .replace(/\n/g, '\\n')
+        .replace(/\t/g, '\\t');
+    return `"${escaped}"`;
+}
+
+function parseVlessLink(link, fallbackName = '节点') {
+    try {
+        const url = new URL(link);
+        if (url.protocol !== 'vless:') return null;
+
+        const name = decodeURIComponent((url.hash || '').replace(/^#/, '')) || fallbackName;
+        const params = url.searchParams;
+        const security = (params.get('security') || '').toLowerCase();
+        const tls = security === 'tls';
+        let server = url.hostname;
+        if (server.startsWith('[') && server.endsWith(']')) {
+            server = server.slice(1, -1);
+        }
+        const port = url.port ? Number(url.port) : (tls ? 443 : 80);
+
+        return {
+            name,
+            server,
+            port: Number.isFinite(port) ? port : (tls ? 443 : 80),
+            uuid: url.username || '',
+            tls,
+            path: params.get('path') || '/',
+            host: params.get('host') || '',
+            sni: params.get('sni') || '',
+            ech: params.get('ech') || ''
+        };
+    } catch {
+        return null;
+    }
+}
+
 // 从环境变量获取配置
 function getConfigValue(key, defaultValue) {
     return defaultValue || '';
@@ -693,46 +735,42 @@ function generateClashConfig(links) {
 
     const proxyNames = [];
     links.forEach((link, index) => {
-        const name = decodeURIComponent(link.split('#')[1] || `节点${index + 1}`);
-        proxyNames.push(name);
-        const server = link.match(/@([^:]+):(\d+)/)?.[1] || '';
-        const port = link.match(/@[^:]+:(\d+)/)?.[1] || '8443';
-        const uuid = link.match(/vless:\/\/([^@]+)@/)?.[1] || '';
-        const tls = link.includes('security=tls');
-        const path = link.match(/path=([^&#]+)/)?.[1] || '/';
-        const host = link.match(/host=([^&#]+)/)?.[1] || '';
-        const sni = link.match(/sni=([^&#]+)/)?.[1] || '';
-        const echParam = link.match(/[?&]ech=([^&#]+)/)?.[1];
-        const echDomain = echParam ? decodeURIComponent(echParam).split('+')[0] : '';
+        const parsed = parseVlessLink(link, `节点${index + 1}`);
+        if (!parsed) return;
 
-        yaml += `  - name: ${name}\n`;
+        const { name, server, port, uuid, tls, path, host, sni, ech } = parsed;
+        const echDomain = ech ? String(ech).trim().split(/[ +]/)[0] : '';
+
+        proxyNames.push(name);
+
+        yaml += `  - name: ${yamlQuote(name)}\n`;
         yaml += `    type: vless\n`;
-        yaml += `    server: ${server}\n`;
+        yaml += `    server: ${yamlQuote(server)}\n`;
         yaml += `    port: ${port}\n`;
-        yaml += `    uuid: ${uuid}\n`;
+        yaml += `    uuid: ${yamlQuote(uuid)}\n`;
         yaml += `    tls: ${tls}\n`;
         yaml += `    network: ws\n`;
         yaml += `    ws-opts:\n`;
-        yaml += `      path: ${path}\n`;
+        yaml += `      path: ${yamlQuote(path)}\n`;
         yaml += `      headers:\n`;
-        yaml += `        Host: ${host}\n`;
+        yaml += `        Host: ${yamlQuote(host)}\n`;
         if (sni) {
-            yaml += `    servername: ${sni}\n`;
+            yaml += `    servername: ${yamlQuote(sni)}\n`;
         }
         if (echDomain) {
             yaml += `    ech-opts:\n`;
             yaml += `      enable: true\n`;
-            yaml += `      query-server-name: ${echDomain}\n`;
+            yaml += `      query-server-name: ${yamlQuote(echDomain)}\n`;
         }
     });
 
     yaml += '\nproxy-groups:\n';
     yaml += '  - name: PROXY\n';
     yaml += '    type: select\n';
-    yaml += `    proxies: [${proxyNames.map(n => `'${n}'`).join(', ')}]\n`;
+    yaml += `    proxies: [${proxyNames.map(n => yamlQuote(n)).join(', ')}]\n`;
     yaml += '  - name: Gemini\n';
     yaml += '    type: select\n';
-    yaml += `    proxies: [${proxyNames.map(n => `'${n}'`).join(', ')}]\n`;
+    yaml += `    proxies: [${proxyNames.map(n => yamlQuote(n)).join(', ')}]\n`;
 
     yaml += '\nrules:\n';
     yaml += '  - DOMAIN-SUFFIX,gemini.google.com,Gemini\n';
@@ -1763,6 +1801,7 @@ export default {
 
             const allProxyNames = [];
             const autoSelectGroups = [];
+            const perDomainGroupYamls = [];
             const nameCounter = new Map(); // 用于跟踪重复名称并添加后缀
 
             // 1. 生成所有节点 (Proxies)
@@ -1790,35 +1829,30 @@ export default {
                     allProxyNames.push(name);
                     groupProxyNames.push(name);
 
-                    const server = link.match(/@([^:]+):(\d+)/)?.[1] || '';
-                    const port = link.match(/@[^:]+:(\d+)/)?.[1] || '8443';
-                    const uuid = link.match(/vless:\/\/([^@]+)@/)?.[1] || '';
-                    const tls = link.includes('security=tls');
-                    const path = link.match(/path=([^&#]+)/)?.[1] || '/';
-                    const host = link.match(/host=([^&#]+)/)?.[1] || '';
-                    const sni = link.match(/sni=([^&#]+)/)?.[1] || '';
-                    const echParam = link.match(/[?&]ech=([^&#]+)/)?.[1];
-                    const echDomain = echParam ? decodeURIComponent(echParam).split('+')[0] : '';
+                    const parsed = parseVlessLink(link, `节点-${index + 1}`);
+                    if (!parsed) return;
+                    const { server, port, uuid, tls, path, host, sni, ech } = parsed;
+                    const echDomain = ech ? String(ech).trim().split(/[ +]/)[0] : '';
 
                     // VLESS 节点格式 (节点名称需要加引号以支持特殊字符如 [])
-                    yaml += `  - name: "${name}"\n`;
+                    yaml += `  - name: ${yamlQuote(name)}\n`;
                     yaml += `    type: vless\n`;
-                    yaml += `    server: ${server}\n`;
+                    yaml += `    server: ${yamlQuote(server)}\n`;
                     yaml += `    port: ${port}\n`;
-                    yaml += `    uuid: ${uuid}\n`;
+                    yaml += `    uuid: ${yamlQuote(uuid)}\n`;
                     yaml += `    tls: ${tls}\n`;
                     yaml += `    network: ws\n`;
                     yaml += `    ws-opts:\n`;
-                    yaml += `      path: ${decodeURIComponent(path)}\n`;
+                    yaml += `      path: ${yamlQuote(path)}\n`;
                     yaml += `      headers:\n`;
-                    yaml += `        Host: ${decodeURIComponent(host)}\n`;
+                    yaml += `        Host: ${yamlQuote(host)}\n`;
                     if (sni) {
-                        yaml += `    servername: ${sni}\n`;
+                        yaml += `    servername: ${yamlQuote(sni)}\n`;
                     }
                     if (echDomain) {
                         yaml += `    ech-opts:\n`;
                         yaml += `      enable: true\n`;
-                        yaml += `      query-server-name: ${echDomain}\n`;
+                        yaml += `      query-server-name: ${yamlQuote(echDomain)}\n`;
                     }
 
                     // TODO: 如果有 VMess 或 Trojan，也需要在这里适配解析
@@ -1830,27 +1864,34 @@ export default {
                 if (groupProxyNames.length > 0) {
                     const groupName = `自动优选-${group.domain}`;
                     autoSelectGroups.push(groupName);
-                    yaml += `  - name: ${groupName}\n`;
-                    yaml += `    type: url-test\n`;
-                    yaml += `    url: http://www.gstatic.com/generate_204\n`;
-                    yaml += `    interval: 300\n`;
-                    yaml += `    tolerance: 50\n`;
-                    yaml += `    proxies:\n`;
-                    groupProxyNames.forEach(name => {
-                        yaml += `      - "${name}"\n`;
+                    let groupYaml = '';
+                    groupYaml += `  - name: ${yamlQuote(groupName)}\n`;
+                    groupYaml += `    type: url-test\n`;
+                    groupYaml += `    url: http://www.gstatic.com/generate_204\n`;
+                    groupYaml += `    interval: 300\n`;
+                    groupYaml += `    tolerance: 50\n`;
+                    groupYaml += `    proxies:\n`;
+                    groupProxyNames.forEach(proxyName => {
+                        groupYaml += `      - ${yamlQuote(proxyName)}\n`;
                     });
+                    perDomainGroupYamls.push(groupYaml);
                 }
             });
 
             yaml += '\nproxy-groups:\n';
 
+            // 1. 每个域名一个自动优选组
+            perDomainGroupYamls.forEach(g => {
+                yaml += g;
+            });
+
             // 2. 节点选择 (Proxy) - 包含所有自动优选组 + 所有节点
             yaml += '  - name: "节点选择"\n';
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
-            autoSelectGroups.forEach(g => yaml += `      - "${g}"\n`);
+            autoSelectGroups.forEach(g => yaml += `      - ${yamlQuote(g)}\n`);
             yaml += '      - "自动选择"\n';
-            allProxyNames.forEach(n => yaml += `      - "${n}"\n`);
+            allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
 
             // 3. 自动选择 (全局自动)
             yaml += '  - name: "自动选择"\n';
@@ -1859,16 +1900,16 @@ export default {
             yaml += '    interval: 300\n';
             yaml += '    tolerance: 50\n';
             yaml += '    proxies:\n';
-            allProxyNames.forEach(n => yaml += `      - "${n}"\n`);
+            allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
 
             // 4. Gemini 分组
             yaml += '  - name: "Gemini"\n';
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
             // Gemini 优先使用"每个域名的自动优选"，然后是"全局自动"，然后是所有节点
-            autoSelectGroups.forEach(g => yaml += `      - "${g}"\n`);
+            autoSelectGroups.forEach(g => yaml += `      - ${yamlQuote(g)}\n`);
             yaml += '      - "自动选择"\n';
-            allProxyNames.forEach(n => yaml += `      - "${n}"\n`);
+            allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
 
             // 5. 漏网之鱼
             yaml += '  - name: "漏网之鱼"\n';
