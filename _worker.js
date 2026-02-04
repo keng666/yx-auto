@@ -1556,10 +1556,11 @@ function generateHomePage(scuValue) {
                     alert('请输入批量配置信息');
                     return;
                 }
-                const lines = batchInput.split('\\n');
+                // Use String.fromCharCode(10) for newline to avoid escaping issues in template literals
+                const lines = batchInput.split(String.fromCharCode(10));
                 lines.forEach(line => {
-                    // 处理可能的中英文逗号
-                    const parts = line.replace(/\uFF0C/g, ',').split(',');
+                    // Use String.fromCharCode(65292) for Chinese comma
+                    const parts = line.replace(new RegExp(String.fromCharCode(65292), 'g'), ',').split(',');
                     // 只要有前两个部分（域名,UUID）就认为是有效的
                     if (parts.length >= 2) {
                         configs.push({
