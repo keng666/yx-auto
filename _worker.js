@@ -1865,7 +1865,8 @@ export default {
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
             yaml += `      - ${yamlQuote(GROUP_AUTO_SELECT)}\n`;
-            yaml += `      - ${yamlQuote(GROUP_DIRECT)}\n`;
+            // 不能把“全球直连”放进“节点选择”，否则会和“全球直连”里引用“节点选择”形成循环依赖
+            yaml += '      - DIRECT\n';
             allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
 
             // ♻️ 自动选择
