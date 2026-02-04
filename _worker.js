@@ -1596,7 +1596,7 @@ function generateHomePage(scuValue) {
             // B. 如果是 V2Ray -> 走 /batch/sub?target=base64 (支持聚合)
             // C. 其他客户端 -> 依然走 Subconverter (因为本地只实现了 Clash yaml 生成，其他 Surge 等格式暂未本地实现)
             
-            // 构建 configs 参数 (base64 encoded "domain,uuid\ndomain,uuid")
+            // 构建 configs 参数 (base64 编码的 domain,uuid 列表，每行一个配置)
             const configsStr = configs.map(c => \`\${c.domain},\${c.uuid}\`).join(String.fromCharCode(10));
             const configsBase64 = btoa(configsStr);
             const batchParams = \`?configs=\${configsBase64}&target=\${clientType}\${commonParams}\`;
