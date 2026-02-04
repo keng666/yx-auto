@@ -1597,10 +1597,9 @@ function generateHomePage(scuValue) {
             // C. 其他客户端 -> 依然走 Subconverter (因为本地只实现了 Clash yaml 生成，其他 Surge 等格式暂未本地实现)
             
             // 构建 configs 参数 (base64 encoded "domain,uuid\ndomain,uuid")
-            // Use String.fromCharCode(10) for join as well
-            const configsStr = configs.map(c => `${ c.domain },${ c.uuid } `).join(String.fromCharCode(10));
+            const configsStr = configs.map(c => `\${ c.domain }, \${ c.uuid } `).join(String.fromCharCode(10));
             const configsBase64 = btoa(configsStr);
-            const batchParams = `? configs = ${ configsBase64 }& target=${ clientType }${ commonParams } `;
+            const batchParams = `? configs =\${ configsBase64 }& target=\${ clientType } \${ commonParams } `;
             
             if (clientType === 'clash') {
                 // 使用本地的高级 Clash 生成器
