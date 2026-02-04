@@ -1809,9 +1809,9 @@ export default {
                     yaml += `    tls: ${tls}\n`;
                     yaml += `    network: ws\n`;
                     yaml += `    ws-opts:\n`;
-                    yaml += `      path: ${path}\n`;
+                    yaml += `      path: ${decodeURIComponent(path)}\n`;
                     yaml += `      headers:\n`;
-                    yaml += `        Host: ${host}\n`;
+                    yaml += `        Host: ${decodeURIComponent(host)}\n`;
                     if (sni) {
                         yaml += `    servername: ${sni}\n`;
                     }
@@ -1845,15 +1845,15 @@ export default {
             yaml += '\nproxy-groups:\n';
 
             // 2. 节点选择 (Proxy) - 包含所有自动优选组 + 所有节点
-            yaml += '  - name: 节点选择\n';
+            yaml += '  - name: "节点选择"\n';
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
             autoSelectGroups.forEach(g => yaml += `      - "${g}"\n`);
-            yaml += '      - 自动选择\n';
+            yaml += '      - "自动选择"\n';
             allProxyNames.forEach(n => yaml += `      - "${n}"\n`);
 
             // 3. 自动选择 (全局自动)
-            yaml += '  - name: 自动选择\n';
+            yaml += '  - name: "自动选择"\n';
             yaml += '    type: url-test\n';
             yaml += '    url: http://www.gstatic.com/generate_204\n';
             yaml += '    interval: 300\n';
@@ -1862,19 +1862,19 @@ export default {
             allProxyNames.forEach(n => yaml += `      - "${n}"\n`);
 
             // 4. Gemini 分组
-            yaml += '  - name: Gemini\n';
+            yaml += '  - name: "Gemini"\n';
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
             // Gemini 优先使用"每个域名的自动优选"，然后是"全局自动"，然后是所有节点
             autoSelectGroups.forEach(g => yaml += `      - "${g}"\n`);
-            yaml += '      - 自动选择\n';
+            yaml += '      - "自动选择"\n';
             allProxyNames.forEach(n => yaml += `      - "${n}"\n`);
 
             // 5. 漏网之鱼
-            yaml += '  - name: 漏网之鱼\n';
+            yaml += '  - name: "漏网之鱼"\n';
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
-            yaml += '      - 节点选择\n';
+            yaml += '      - "节点选择"\n';
             yaml += '      - DIRECT\n';
 
             yaml += '\nrules:\n';
