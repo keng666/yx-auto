@@ -1763,6 +1763,7 @@ export default {
 
             const allProxyNames = [];
             const autoSelectGroups = [];
+            const nameCounter = new Map(); // 用于跟踪重复名称并添加后缀
 
             // 1. 生成所有节点 (Proxies)
             nodeGroups.forEach(group => {
@@ -1775,7 +1776,17 @@ export default {
                     const originalName = decodeURIComponent(link.split('#')[1] || `节点-${index + 1}`);
                     // 为确保节点名称唯一，添加域名简称作为前缀
                     const domainShort = group.domain.split('.')[0]; // 取域名第一部分
-                    const name = `[${domainShort}]${originalName}`;
+                    let name = `[${domainShort}]${originalName}`;
+
+                    // 如果名称已存在，添加数字后缀
+                    if (nameCounter.has(name)) {
+                        const count = nameCounter.get(name) + 1;
+                        nameCounter.set(name, count);
+                        name = `${name}-${count}`;
+                    } else {
+                        nameCounter.set(name, 1);
+                    }
+
                     allProxyNames.push(name);
                     groupProxyNames.push(name);
 
