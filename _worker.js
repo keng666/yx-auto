@@ -1772,7 +1772,10 @@ export default {
                     // 注意：这里需要复用之前的解析逻辑，或者直接生成Clash对象
                     // 为简化，这里直接解析 vless:// 字符串 (这也是之前代码的逻辑)
 
-                    const name = decodeURIComponent(link.split('#')[1] || `${group.domain}-${index + 1}`);
+                    const originalName = decodeURIComponent(link.split('#')[1] || `节点-${index + 1}`);
+                    // 为确保节点名称唯一，添加域名简称作为前缀
+                    const domainShort = group.domain.split('.')[0]; // 取域名第一部分
+                    const name = `[${domainShort}]${originalName}`;
                     allProxyNames.push(name);
                     groupProxyNames.push(name);
 
