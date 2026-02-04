@@ -1556,10 +1556,10 @@ function generateHomePage(scuValue) {
                     alert('请输入批量配置信息');
                     return;
                 }
-                const lines = batchInput.split('\n');
+                const lines = batchInput.split('\\n');
                 lines.forEach(line => {
                     // 处理可能的中英文逗号
-                    const parts = line.replace(/，/g, ',').split(',');
+                    const parts = line.replace(/\uFF0C/g, ',').split(',');
                     // 只要有前两个部分（域名,UUID）就认为是有效的
                     if (parts.length >= 2) {
                         configs.push({
