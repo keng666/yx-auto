@@ -1800,8 +1800,8 @@ export default {
                     const echParam = link.match(/[?&]ech=([^&#]+)/)?.[1];
                     const echDomain = echParam ? decodeURIComponent(echParam).split('+')[0] : '';
 
-                    // VLESS 节点格式
-                    yaml += `  - name: ${name}\n`;
+                    // VLESS 节点格式 (节点名称需要加引号以支持特殊字符如 [])
+                    yaml += `  - name: "${name}"\n`;
                     yaml += `    type: vless\n`;
                     yaml += `    server: ${server}\n`;
                     yaml += `    port: ${port}\n`;
@@ -1837,7 +1837,7 @@ export default {
                     yaml += `    tolerance: 50\n`;
                     yaml += `    proxies:\n`;
                     groupProxyNames.forEach(name => {
-                        yaml += `      - ${name}\n`;
+                        yaml += `      - "${name}"\n`;
                     });
                 }
             });
@@ -1848,9 +1848,9 @@ export default {
             yaml += '  - name: 节点选择\n';
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
-            autoSelectGroups.forEach(g => yaml += `      - ${g}\n`);
+            autoSelectGroups.forEach(g => yaml += `      - "${g}"\n`);
             yaml += '      - 自动选择\n';
-            allProxyNames.forEach(n => yaml += `      - ${n}\n`);
+            allProxyNames.forEach(n => yaml += `      - "${n}"\n`);
 
             // 3. 自动选择 (全局自动)
             yaml += '  - name: 自动选择\n';
@@ -1859,16 +1859,16 @@ export default {
             yaml += '    interval: 300\n';
             yaml += '    tolerance: 50\n';
             yaml += '    proxies:\n';
-            allProxyNames.forEach(n => yaml += `      - ${n}\n`);
+            allProxyNames.forEach(n => yaml += `      - "${n}"\n`);
 
             // 4. Gemini 分组
             yaml += '  - name: Gemini\n';
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
             // Gemini 优先使用"每个域名的自动优选"，然后是"全局自动"，然后是所有节点
-            autoSelectGroups.forEach(g => yaml += `      - ${g}\n`);
+            autoSelectGroups.forEach(g => yaml += `      - "${g}"\n`);
             yaml += '      - 自动选择\n';
-            allProxyNames.forEach(n => yaml += `      - ${n}\n`);
+            allProxyNames.forEach(n => yaml += `      - "${n}"\n`);
 
             // 5. 漏网之鱼
             yaml += '  - name: 漏网之鱼\n';
