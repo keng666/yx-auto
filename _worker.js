@@ -1772,10 +1772,10 @@ export default {
                     // 注意：这里需要复用之前的解析逻辑，或者直接生成Clash对象
                     // 为简化，这里直接解析 vless:// 字符串 (这也是之前代码的逻辑)
 
-                    const name = decodeURIComponent(link.split('#')[1] || \`\${group.domain}-\${index + 1}\`);
+                    const name = decodeURIComponent(link.split('#')[1] || `${group.domain}-${index + 1}`);
                     allProxyNames.push(name);
                     groupProxyNames.push(name);
-                    
+
                     const server = link.match(/@([^:]+):(\d+)/)?.[1] || '';
                     const port = link.match(/@[^:]+:(\d+)/)?.[1] || '8443';
                     const uuid = link.match(/vless:\/\/([^@]+)@/)?.[1] || '';
@@ -1785,59 +1785,59 @@ export default {
                     const sni = link.match(/sni=([^&#]+)/)?.[1] || '';
                     const echParam = link.match(/[?&]ech=([^&#]+)/)?.[1];
                     const echDomain = echParam ? decodeURIComponent(echParam).split('+')[0] : '';
-                    
+
                     // VLESS 节点格式
-                    yaml += \`  - name: \${name}\n\`;
-                    yaml += \`    type: vless\n\`;
-                    yaml += \`    server: \${server}\n\`;
-                    yaml += \`    port: \${port}\n\`;
-                    yaml += \`    uuid: \${uuid}\n\`;
-                    yaml += \`    tls: \${tls}\n\`;
-                    yaml += \`    network: ws\n\`;
-                    yaml += \`    ws-opts:\n\`;
-                    yaml += \`      path: \${path}\n\`;
-                    yaml += \`      headers:\n\`;
-                    yaml += \`        Host: \${host}\n\`;
+                    yaml += `  - name: ${name}\n`;
+                    yaml += `    type: vless\n`;
+                    yaml += `    server: ${server}\n`;
+                    yaml += `    port: ${port}\n`;
+                    yaml += `    uuid: ${uuid}\n`;
+                    yaml += `    tls: ${true}\n`;
+                    yaml += `    network: ws\n`;
+                    yaml += `    ws-opts:\n`;
+                    yaml += `      path: ${path}\n`;
+                    yaml += `      headers:\n`;
+                    yaml += `        Host: ${host}\n`;
                     if (sni) {
-                        yaml += \`    servername: \${sni}\n\`;
+                        yaml += `    servername: ${sni}\n`;
                     }
                     if (echDomain) {
-                        yaml += \`    ech-opts:\n\`;
-                        yaml += \`      enable: true\n\`;
-                        yaml += \`      query-server-name: \${echDomain}\n\`;
+                        yaml += `    ech-opts:\n`;
+                        yaml += `      enable: true\n`;
+                        yaml += `      query-server-name: ${echDomain}\n`;
                     }
-                    
+
                     // TODO: 如果有 VMess 或 Trojan，也需要在这里适配解析
                     // 目前 batch 模式主要基于通用的 link 生成逻辑，假设主要是 VLESS
                     // 如果之前的 generateLinksFromSource 产生了其他协议，需要在这里扩展 regex
                 });
-                
+
                 // 为该域名创建自动选择组
                 if (groupProxyNames.length > 0) {
-                    const groupName = \`自动优选-\${group.domain}\`;
+                    const groupName = `自动优选-${group.domain}`;
                     autoSelectGroups.push(groupName);
-                    yaml += \`  - name: \${groupName}\n\`;
-                    yaml += \`    type: url-test\n\`;
-                    yaml += \`    url: http://www.gstatic.com/generate_204\n\`;
-                    yaml += \`    interval: 300\n\`;
-                    yaml += \`    tolerance: 50\n\`;
-                    yaml += \`    proxies:\n\`;
+                    yaml += `  - name: ${groupName}\n`;
+                    yaml += `    type: url-test\n`;
+                    yaml += `    url: http://www.gstatic.com/generate_204\n`;
+                    yaml += `    interval: 300\n`;
+                    yaml += `    tolerance: 50\n`;
+                    yaml += `    proxies:\n`;
                     groupProxyNames.forEach(name => {
-                        yaml += \`      - \${name}\n\`;
+                        yaml += `      - ${name}\n`;
                     });
                 }
             });
-            
+
             yaml += '\nproxy-groups:\n';
-            
+
             // 2. 节点选择 (Proxy) - 包含所有自动优选组 + 所有节点
             yaml += '  - name: 节点选择\n';
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
-            autoSelectGroups.forEach(g => yaml += \`      - \${g}\n\`);
+            autoSelectGroups.forEach(g => yaml += `      - ${g}\n`);
             yaml += '      - 自动选择\n';
-            allProxyNames.forEach(n => yaml += \`      - \${n}\n\`);
-            
+            allProxyNames.forEach(n => yaml += `      - ${n}\n`);
+
             // 3. 自动选择 (全局自动)
             yaml += '  - name: 自动选择\n';
             yaml += '    type: url-test\n';
@@ -1845,24 +1845,24 @@ export default {
             yaml += '    interval: 300\n';
             yaml += '    tolerance: 50\n';
             yaml += '    proxies:\n';
-            allProxyNames.forEach(n => yaml += \`      - \${n}\n\`);
-            
+            allProxyNames.forEach(n => yaml += `      - ${n}\n`);
+
             // 4. Gemini 分组
             yaml += '  - name: Gemini\n';
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
             // Gemini 优先使用"每个域名的自动优选"，然后是"全局自动"，然后是所有节点
-            autoSelectGroups.forEach(g => yaml += \`      - \${g}\n\`);
-             yaml += '      - 自动选择\n';
-            allProxyNames.forEach(n => yaml += \`      - \${n}\n\`);
-            
+            autoSelectGroups.forEach(g => yaml += `      - ${g}\n`);
+            yaml += '      - 自动选择\n';
+            allProxyNames.forEach(n => yaml += `      - ${n}\n`);
+
             // 5. 漏网之鱼
             yaml += '  - name: 漏网之鱼\n';
             yaml += '    type: select\n';
             yaml += '    proxies:\n';
-            yaml += '      - 节点选择\n'; 
+            yaml += '      - 节点选择\n';
             yaml += '      - DIRECT\n';
-            
+
             yaml += '\nrules:\n';
             // Gemini 规则
             yaml += '  - DOMAIN-SUFFIX,gemini.google.com,Gemini\n';
@@ -1875,13 +1875,13 @@ export default {
             yaml += '  - DOMAIN-SUFFIX,deepmind.google,Gemini\n';
             yaml += '  - DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com,Gemini\n';
             yaml += '  - DOMAIN-KEYWORD,gemini,Gemini\n';
-            
+
             // 常规规则
             yaml += '  - DOMAIN-SUFFIX,local,DIRECT\n';
             yaml += '  - IP-CIDR,127.0.0.0/8,DIRECT\n';
             yaml += '  - GEOIP,CN,DIRECT\n';
             yaml += '  - MATCH,节点选择\n';
-            
+
             return yaml;
         }
 
@@ -1889,12 +1889,12 @@ export default {
         if (path === '/batch/sub') {
             const configsParam = url.searchParams.get('configs'); // base64 encoded "domain,uuid|domain,uuid"
             if (!configsParam) return new Response('Missing configs', { status: 400 });
-            
+
             let configsStr = '';
             try {
                 configsStr = atob(configsParam);
-            } catch(e) { return new Response('Invalid configs base64', { status: 400 }); }
-            
+            } catch (e) { return new Response('Invalid configs base64', { status: 400 }); }
+
             const lines = configsStr.split('\n'); // 客户端用 \n 连接
             const configs = [];
             lines.forEach(line => {
@@ -1903,7 +1903,7 @@ export default {
                     configs.push({ domain: parts[0].trim(), uuid: parts[1].trim() });
                 }
             });
-            
+
             // 获取通用参数
             const epd = url.searchParams.get('epd') !== 'no';
             const epi = url.searchParams.get('epi') !== 'no';
@@ -1915,18 +1915,18 @@ export default {
             // 如果没传任何协议参数，默认开启VLESS? 之前的逻辑是参数没传 && env.ev。这里简单处理：如果有任意一个开启就是开启，否则默认ev
             const hasProto = evEnabled || etEnabled || vmEnabled;
             const finalEv = hasProto ? evEnabled : true;
-            
+
             const ipv4Enabled = url.searchParams.get('ipv4') !== 'no';
             const ipv6Enabled = url.searchParams.get('ipv6') !== 'no';
             const ispMobile = url.searchParams.get('ispMobile') !== 'no';
             const ispUnicom = url.searchParams.get('ispUnicom') !== 'no';
             const ispTelecom = url.searchParams.get('ispTelecom') !== 'no';
-            
+
             let disableNonTLS = url.searchParams.get('dkby') === 'yes';
             const echParam = url.searchParams.get('ech');
             const echEnabled = echParam === 'yes' || (echParam === null && enableECH);
             if (echEnabled) disableNonTLS = true;
-            const echConfig = echEnabled ? \`\${url.searchParams.get('customECHDomain') || customECHDomain}+\${url.searchParams.get('customDNS') || customDNS}\` : null;
+            const echConfig = echEnabled ? `${url.searchParams.get('customECHDomain') || customECHDomain}+${url.searchParams.get('customDNS') || customDNS}` : null;
             const customPath = url.searchParams.get('path') || '/';
 
             // 预取优选IP数据（所有配置共用）
@@ -1934,33 +1934,33 @@ export default {
             if (epi) {
                 try {
                     dynamicIPList = await fetchDynamicIPs(ipv4Enabled, ipv6Enabled, ispMobile, ispUnicom, ispTelecom);
-                } catch (e) {}
+                } catch (e) { }
             }
-            
+
             // 预取GitHub IP（所有配置共用）
             let githubIPList = [];
             if (egi) {
-                 try {
-                     // 复用之前的逻辑，简单起见直接调用
-                     // 注意：这里为了性能，暂不 implementing 复杂的 API 递归，仅支持基础 list
-                     // 如果要做得很完美需要把 handleSubscriptionRequest 里的逻辑拆分出来。
-                     // 鉴于篇幅，这里简化：
-                     const newIPList = await fetchAndParseNewIPs(piu);
-                     githubIPList = newIPList;
-                 } catch (e) {}
+                try {
+                    // 复用之前的逻辑，简单起见直接调用
+                    // 注意：这里为了性能，暂不 implementing 复杂的 API 递归，仅支持基础 list
+                    // 如果要做得很完美需要把 handleSubscriptionRequest 里的逻辑拆分出来。
+                    // 鉴于篇幅，这里简化：
+                    const newIPList = await fetchAndParseNewIPs(piu);
+                    githubIPList = newIPList;
+                } catch (e) { }
             }
-            
+
             // 原生域名列表
             const domainList = epd ? directDomains.map(d => ({ ip: d.domain, isp: d.name || d.domain })) : [];
 
             // 开始生成
             const nodeGroups = []; // { domain: 'xxx', nodes: [] }
-            
+
             for (const conf of configs) {
                 const myNodes = [];
                 const myDomain = conf.domain;
                 const myUuid = conf.uuid;
-                
+
                 // Helper to generate links
                 const gen = (list) => {
                     const links = [];
@@ -1968,10 +1968,10 @@ export default {
                     if (etEnabled) {
                         // Trojan 也是同步生成的（之前的 async 只是为了 await 某些 fetch，但 generateTrojanLinksFromSource 本身虽然标了 async 其实内部没有 await 关键操作，除了 fetch API 但这里是 source list）
                         // 检查 generateTrojanLinksFromSource 源码，它是 sync 的，只是标了 async
-                         // 修正：generateTrojanLinksFromSource 在原代码里没有 async 或者是 sync 的。原代码 Line 329: async function... 
-                         // 且 Line 517: await generateTrojanLinksFromSource
-                         // 让我们看 Line 329，它没有 await。所以可以直接调用。
-                         // 但是为了安全，我们 await 它。
+                        // 修正：generateTrojanLinksFromSource 在原代码里没有 async 或者是 sync 的。原代码 Line 329: async function... 
+                        // 且 Line 517: await generateTrojanLinksFromSource
+                        // 让我们看 Line 329，它没有 await。所以可以直接调用。
+                        // 但是为了安全，我们 await 它。
                     }
                     if (vmEnabled) links.push(...generateVMessLinksFromSource(list, myUuid, myDomain, disableNonTLS, customPath, echConfig));
                     return links;
@@ -1987,20 +1987,20 @@ export default {
                 if (egi) {
                     // 注意：GitHub IP 生成 VLESS 链接的逻辑略有不同 (generateLinksFromNewIPs)
                     // 复用 generateLinksFromNewIPs
-                     if (finalEv) myNodes.push(...generateLinksFromNewIPs(githubIPList, myUuid, myDomain, customPath, echConfig));
+                    if (finalEv) myNodes.push(...generateLinksFromNewIPs(githubIPList, myUuid, myDomain, customPath, echConfig));
                 }
-                
+
                 nodeGroups.push({ domain: myDomain, nodes: myNodes });
             }
-            
+
             // 目前仅支持 Clash 格式输出智能配置
             // 如果 target 不是 clash，则退化为普通聚合
             const target = url.searchParams.get('target') || 'base64';
-            
+
             if (target === 'clash' || target === 'clashr') {
                 const yaml = generateSmartClashConfig(nodeGroups);
                 return new Response(yaml, {
-                    headers: { 
+                    headers: {
                         'Content-Type': 'text/yaml; charset=utf-8',
                         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                         'Content-Disposition': 'attachment; filename="clash_config.yaml"'
@@ -2011,11 +2011,11 @@ export default {
                 const allLinks = [];
                 nodeGroups.forEach(g => allLinks.push(...g.nodes));
                 return new Response(btoa(allLinks.join('\n')), {
-                     headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+                    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
                 });
             }
         }
-        
+
         // 订阅请求格式: /{UUID或Password}/sub?domain=xxx&epd=yes&epi=yes&egi=yes
         const pathMatch = path.match(/^\/([^\/]+)\/sub$/);
         if (pathMatch) {
@@ -2053,7 +2053,7 @@ export default {
             if (echEnabled) disableNonTLS = true;
             const customDNSParam = url.searchParams.get('customDNS') || customDNS;
             const customECHDomainParam = url.searchParams.get('customECHDomain') || customECHDomain;
-            const echConfig = echEnabled ? `${ customECHDomainParam } + ${ customDNSParam }` : null;
+            const echConfig = echEnabled ? `${customECHDomainParam} + ${customDNSParam} ` : null;
 
             // 自定义路径
             const customPath = url.searchParams.get('path') || '/';
