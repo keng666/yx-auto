@@ -1977,6 +1977,9 @@ export default {
                     return links;
                 };
 
+                // 获取worker域名
+                const workerDomain = url.hostname;
+
                 // 原生
                 myNodes.push(...gen([{ ip: workerDomain, isp: '原生地址' }]));
                 // 优选域名
