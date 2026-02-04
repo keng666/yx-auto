@@ -1792,7 +1792,7 @@ export default {
                     yaml += `    server: ${server}\n`;
                     yaml += `    port: ${port}\n`;
                     yaml += `    uuid: ${uuid}\n`;
-                    yaml += `    tls: ${true}\n`;
+                    yaml += `    tls: ${tls}\n`;
                     yaml += `    network: ws\n`;
                     yaml += `    ws-opts:\n`;
                     yaml += `      path: ${path}\n`;
@@ -1997,20 +1997,28 @@ export default {
             // 如果 target 不是 clash，则退化为普通聚合
             const target = url.searchParams.get('target') || 'base64';
 
-            if (target === 'clash' || target === 'clashr') {
-                const yaml = generateSmartClashConfig(nodeGroups);
-                return new Response(yaml, {
-                    headers: {
-                        'Content-Type': 'text/yaml; charset=utf-8',
-                        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-                        'Content-Disposition': 'attachment; filename="clash_config.yaml"'
-                    }
-                });
-            } else {
-                // Base64 聚合
-                const allLinks = [];
-                nodeGroups.forEach(g => allLinks.push(...g.nodes));
-                return new Response(btoa(allLinks.join('\n')), {
+            try {
+                if (target === 'clash' || target === 'clashr') {
+                    const yaml = generateSmartClashConfig(nodeGroups);
+                    return new Response(yaml, {
+                        headers: {
+                            'Content-Type': 'text/yaml; charset=utf-8',
+                            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                            'Content-Disposition': 'attachment; filename="clash_config.yaml"'
+                        }
+                    });
+                } else {
+                    // Base64 聚合
+                    const allLinks = [];
+                    nodeGroups.forEach(g => allLinks.push(...g.nodes));
+                    return new Response(btoa(allLinks.join('\n')), {
+                        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+                    });
+                }
+            } catch (error) {
+                console.error('Batch sub error:', error);
+                return new Response(`Error generating config: ${error.message}\n${error.stack}`, {
+                    status: 500,
                     headers: { 'Content-Type': 'text/plain; charset=utf-8' }
                 });
             }
