@@ -1637,7 +1637,8 @@ function generateHomePage(scuValue) {
             // 构建 configs 参数 (base64 编码的 domain,uuid 列表，每行一个配置)
             const configsStr = configs.map(c => \`\${c.domain},\${c.uuid}\`).join(String.fromCharCode(10));
             const configsBase64 = btoa(configsStr);
-            const batchParams = \`?configs=\${configsBase64}&target=\${clientType}\${commonParams}\`;
+            const tplParam = clientType === 'clash' ? '&tpl=acl4ssr' : '';
+            const batchParams = \`?configs=\${configsBase64}&target=\${clientType}\${tplParam}\${commonParams}\`;
             
             if (clientType === 'clash') {
                 // 使用本地的高级 Clash 生成器
@@ -1786,6 +1787,206 @@ export default {
                     }
                 });
             }
+        }
+
+        // 批量/ACL4SSR Clash 配置生成器（含常用分组）
+        function generateAcl4ssrClashConfig(nodeGroups) {
+            const GROUP_NODE_SELECT = '🔰 节点选择';
+            const GROUP_AUTO_SELECT = '♻️ 自动选择';
+            const GROUP_MEDIA_OVERSEA = '🌍 国外媒体';
+            const GROUP_MEDIA_CHINA = '🌏 国内媒体';
+            const GROUP_MICROSOFT = 'Ⓜ️ 微软服务';
+            const GROUP_TELEGRAM = '📲 电报信息';
+            const GROUP_APPLE = '🍎 苹果服务';
+            const GROUP_DIRECT = '🎯 全球直连';
+            const GROUP_BLOCK = '🛑 全球拦截';
+            const GROUP_FINAL = '🐟 漏网之鱼';
+
+            let yaml = 'port: 7890\n';
+            yaml += 'socks-port: 7891\n';
+            yaml += 'allow-lan: false\n';
+            yaml += 'mode: rule\n';
+            yaml += 'log-level: info\n';
+            yaml += 'external-controller: 127.0.0.1:9090\n\n';
+
+            yaml += 'proxies:\n';
+
+            const allProxyNames = [];
+            const nameCounter = new Map(); // 用于跟踪重复名称并添加后缀
+
+            nodeGroups.forEach(group => {
+                group.nodes.forEach((link, index) => {
+                    const parsed = parseVlessLink(link, `节点-${index + 1}`);
+                    if (!parsed) return;
+
+                    const originalName = parsed.name || `节点-${index + 1}`;
+                    const domainShort = group.domain.split('.')[0]; // 取域名第一部分
+                    let name = `[${domainShort}]${originalName}`;
+
+                    if (nameCounter.has(name)) {
+                        const count = nameCounter.get(name) + 1;
+                        nameCounter.set(name, count);
+                        name = `${name}-${count}`;
+                    } else {
+                        nameCounter.set(name, 1);
+                    }
+
+                    allProxyNames.push(name);
+
+                    const { server, port, uuid, tls, path, host, sni, ech } = parsed;
+                    const echDomain = ech ? String(ech).trim().split(/[ +]/)[0] : '';
+
+                    yaml += `  - name: ${yamlQuote(name)}\n`;
+                    yaml += '    type: vless\n';
+                    yaml += `    server: ${yamlQuote(server)}\n`;
+                    yaml += `    port: ${port}\n`;
+                    yaml += `    uuid: ${yamlQuote(uuid)}\n`;
+                    yaml += `    tls: ${tls}\n`;
+                    yaml += '    network: ws\n';
+                    yaml += '    ws-opts:\n';
+                    yaml += `      path: ${yamlQuote(path)}\n`;
+                    yaml += '      headers:\n';
+                    yaml += `        Host: ${yamlQuote(host)}\n`;
+                    if (sni) {
+                        yaml += `    servername: ${yamlQuote(sni)}\n`;
+                    }
+                    if (echDomain) {
+                        yaml += '    ech-opts:\n';
+                        yaml += '      enable: true\n';
+                        yaml += `      query-server-name: ${yamlQuote(echDomain)}\n`;
+                    }
+                });
+            });
+
+            yaml += '\nproxy-groups:\n';
+
+            // 🔰 节点选择
+            yaml += `  - name: ${yamlQuote(GROUP_NODE_SELECT)}\n`;
+            yaml += '    type: select\n';
+            yaml += '    proxies:\n';
+            yaml += `      - ${yamlQuote(GROUP_AUTO_SELECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_DIRECT)}\n`;
+            allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
+
+            // ♻️ 自动选择
+            yaml += `  - name: ${yamlQuote(GROUP_AUTO_SELECT)}\n`;
+            yaml += '    type: url-test\n';
+            yaml += '    url: http://www.gstatic.com/generate_204\n';
+            yaml += '    interval: 300\n';
+            yaml += '    tolerance: 50\n';
+            yaml += '    proxies:\n';
+            allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
+
+            // 🌍 国外媒体
+            yaml += `  - name: ${yamlQuote(GROUP_MEDIA_OVERSEA)}\n`;
+            yaml += '    type: select\n';
+            yaml += '    proxies:\n';
+            yaml += `      - ${yamlQuote(GROUP_NODE_SELECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_AUTO_SELECT)}\n`;
+            allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
+            yaml += '      - DIRECT\n';
+
+            // 🌏 国内媒体
+            yaml += `  - name: ${yamlQuote(GROUP_MEDIA_CHINA)}\n`;
+            yaml += '    type: select\n';
+            yaml += '    proxies:\n';
+            yaml += `      - ${yamlQuote(GROUP_DIRECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_NODE_SELECT)}\n`;
+
+            // Ⓜ️ 微软服务
+            yaml += `  - name: ${yamlQuote(GROUP_MICROSOFT)}\n`;
+            yaml += '    type: select\n';
+            yaml += '    proxies:\n';
+            yaml += `      - ${yamlQuote(GROUP_DIRECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_NODE_SELECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_AUTO_SELECT)}\n`;
+            allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
+
+            // 📲 电报信息
+            yaml += `  - name: ${yamlQuote(GROUP_TELEGRAM)}\n`;
+            yaml += '    type: select\n';
+            yaml += '    proxies:\n';
+            yaml += `      - ${yamlQuote(GROUP_NODE_SELECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_AUTO_SELECT)}\n`;
+            allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
+            yaml += '      - DIRECT\n';
+
+            // 🍎 苹果服务
+            yaml += `  - name: ${yamlQuote(GROUP_APPLE)}\n`;
+            yaml += '    type: select\n';
+            yaml += '    proxies:\n';
+            yaml += `      - ${yamlQuote(GROUP_NODE_SELECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_DIRECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_AUTO_SELECT)}\n`;
+            allProxyNames.forEach(n => yaml += `      - ${yamlQuote(n)}\n`);
+
+            // 🎯 全球直连
+            yaml += `  - name: ${yamlQuote(GROUP_DIRECT)}\n`;
+            yaml += '    type: select\n';
+            yaml += '    proxies:\n';
+            yaml += '      - DIRECT\n';
+            yaml += `      - ${yamlQuote(GROUP_NODE_SELECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_AUTO_SELECT)}\n`;
+
+            // 🛑 全球拦截
+            yaml += `  - name: ${yamlQuote(GROUP_BLOCK)}\n`;
+            yaml += '    type: select\n';
+            yaml += '    proxies:\n';
+            yaml += '      - REJECT\n';
+            yaml += '      - DIRECT\n';
+
+            // 🐟 漏网之鱼
+            yaml += `  - name: ${yamlQuote(GROUP_FINAL)}\n`;
+            yaml += '    type: select\n';
+            yaml += '    proxies:\n';
+            yaml += `      - ${yamlQuote(GROUP_NODE_SELECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_DIRECT)}\n`;
+            yaml += `      - ${yamlQuote(GROUP_AUTO_SELECT)}\n`;
+
+            // 规则集（ACL4SSR）
+            yaml += '\nrule-providers:\n';
+            const ruleProviders = {
+                LocalAreaNetwork: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/LocalAreaNetwork.yaml',
+                UnBan: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/UnBan.yaml',
+                BanAD: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/BanAD.yaml',
+                BanProgramAD: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/BanProgramAD.yaml',
+                ChinaDomain: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/ChinaDomain.yaml',
+                ChinaCompanyIp: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/ChinaCompanyIp.yaml',
+                ChinaMedia: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/ChinaMedia.yaml',
+                ProxyMedia: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/ProxyMedia.yaml',
+                Apple: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/Apple.yaml',
+                Microsoft: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/Ruleset/Microsoft.yaml',
+                Telegram: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/Ruleset/Telegram.yaml',
+                ProxyGFWlist: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/ProxyGFWlist.yaml',
+                Download: 'https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Providers/Download.yaml'
+            };
+            Object.entries(ruleProviders).forEach(([name, url]) => {
+                yaml += `  ${name}:\n`;
+                yaml += '    type: http\n';
+                yaml += '    behavior: classical\n';
+                yaml += `    url: ${yamlQuote(url)}\n`;
+                yaml += `    path: ${yamlQuote(`./ruleset/ACL4SSR/${name}.yaml`)}\n`;
+                yaml += '    interval: 86400\n';
+            });
+
+            yaml += '\nrules:\n';
+            yaml += `  - RULE-SET,LocalAreaNetwork,${GROUP_DIRECT}\n`;
+            yaml += `  - RULE-SET,UnBan,${GROUP_DIRECT}\n`;
+            yaml += `  - RULE-SET,BanAD,${GROUP_BLOCK}\n`;
+            yaml += `  - RULE-SET,BanProgramAD,${GROUP_BLOCK}\n`;
+            yaml += `  - RULE-SET,Download,${GROUP_DIRECT}\n`;
+            yaml += `  - RULE-SET,Apple,${GROUP_APPLE}\n`;
+            yaml += `  - RULE-SET,Telegram,${GROUP_TELEGRAM}\n`;
+            yaml += `  - RULE-SET,Microsoft,${GROUP_MICROSOFT}\n`;
+            yaml += `  - RULE-SET,ChinaMedia,${GROUP_MEDIA_CHINA}\n`;
+            yaml += `  - RULE-SET,ProxyMedia,${GROUP_MEDIA_OVERSEA}\n`;
+            yaml += `  - RULE-SET,ProxyGFWlist,${GROUP_NODE_SELECT}\n`;
+            yaml += `  - RULE-SET,ChinaDomain,${GROUP_DIRECT}\n`;
+            yaml += `  - RULE-SET,ChinaCompanyIp,${GROUP_DIRECT}\n`;
+            yaml += `  - GEOIP,CN,${GROUP_DIRECT}\n`;
+            yaml += `  - MATCH,${GROUP_FINAL}\n`;
+
+            return yaml;
         }
 
         // 批量/高级 Clash 配置生成器
@@ -2054,10 +2255,13 @@ export default {
             // 目前仅支持 Clash 格式输出智能配置
             // 如果 target 不是 clash，则退化为普通聚合
             const target = url.searchParams.get('target') || 'base64';
+            const tpl = (url.searchParams.get('tpl') || '').toLowerCase();
 
             try {
                 if (target === 'clash' || target === 'clashr') {
-                    const yaml = generateSmartClashConfig(nodeGroups);
+                    const yaml = (tpl === 'acl4ssr' || tpl === 'acl' || tpl === 'full')
+                        ? generateAcl4ssrClashConfig(nodeGroups)
+                        : generateSmartClashConfig(nodeGroups);
                     return new Response(yaml, {
                         headers: {
                             'Content-Type': 'text/yaml; charset=utf-8',
